@@ -1,0 +1,14 @@
+.input {
+  width: max-content;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  height: 3rem;
+  text-align: left;
+  padding-left: 1rem;
+}
+
+.input::placeholder {
+  /* Chrome, Firefox, Opera, Safari 10.1+ */
+  color: gray;
+  opacity: .8; /* Firefox */
+}

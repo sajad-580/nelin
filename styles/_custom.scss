@@ -1,0 +1,89 @@
+.ltr {
+  direction: ltr;
+  text-align: left;
+}
+/* style.css */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #000000;
+  color: white;
+  padding: 8px;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+aside {
+  transition: all 0.4s ease;
+}
+aside.active {
+  left: 0;
+}
+
+.toggle-wrap {
+  padding: 10px;
+  position: relative;
+  cursor: pointer;
+
+  /*disable selection*/
+  user-select: none;
+}
+.toggle-bar,
+.toggle-bar::before,
+.toggle-bar::after,
+.toggle-wrap.active .toggle-bar,
+.toggle-wrap.active .toggle-bar::before,
+.toggle-wrap.active .toggle-bar::after {
+  transition: all 0.2s ease-in-out;
+}
+.toggle-bar {
+  width: 38px;
+  margin: 10px 0;
+  position: relative;
+  border-top: 6px solid #fe4183;
+  display: block;
+}
+.toggle-bar::before,
+.toggle-bar::after {
+  content: "";
+  display: block;
+  background: #fe4183;
+  height: 6px;
+  width: 38px;
+  position: absolute;
+  top: -16px;
+  transform: rotate(0deg);
+  transform-origin: 13%;
+}
+.toggle-bar::after {
+  top: 4px;
+}
+.toggle-wrap.active .toggle-bar {
+  border-top: 6px solid transparent;
+}
+.toggle-wrap.active .toggle-bar::before {
+  transform: rotate(45deg);
+}
+.toggle-wrap.active .toggle-bar::after {
+  transform: rotate(-45deg);
+}
+
+::-webkit-scrollbar {
+  width: 0.5em;
+}
+
+::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 6px #fee2e2;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #fee2e2;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #fe4183;
+}

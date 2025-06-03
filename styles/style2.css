@@ -1,0 +1,47 @@
+.bg-yellow-100 {
+    background: #aeaeae !important;
+    color: #FFF;
+}
+
+.flex.items-center.py-4.pr-4.pl-4.md\:pl-20.bg-red-100.rounded-2xl {
+    background: #aeaeae;
+}
+
+
+.rounded-md.bg-yellow-400,
+.bg-yellow-200,
+button.bg-yellow-300 {
+    background: #000;
+    color: #FFF;
+}
+
+button.btn.btn-accent.w-full.btn-sm.text-sm {
+    background: green;
+    border: 1px solid #aeaeae;
+}
+
+.flex.flex-col.p-4.mt-4.bg-red-100.rounded-2xl {
+    background: #EEE;
+}
+
+.mx-4.mb-2.alert.alert-error.mt-20.overflow-y-hidden {
+    background: #EEE;
+    color: #ff0000;
+}
+
+aside {
+    background: #f9f7f5 !important;
+}
+
+.input-bordered {
+    border-color: #ececec;
+    color: #000;
+}
+
+.inline-block.full-logo- img {
+    width: unset !important;
+}
+
+.hidden.md\:items-center.md\:flex span {
+    color: #fff !important;
+}

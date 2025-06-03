@@ -1,0 +1,26 @@
+export enum ThemeId {
+    light = "light",
+    dark = "dark",
+    chameleon = "chameleon",
+    penguin = "penguin",
+    cupcake = "cupcake",
+    bumblebee = "bumblebee",
+    emerald = "emerald",
+    corporate = "corporate",
+    synthwave = "synthwave",
+    retro = "retro",
+    cyberpunk = "cyberpunk",
+    valentine = "valentine",
+    halloween = "halloween",
+    garden = "garden",
+    forest = "forest",
+    aqua = "aqua",
+    lofi = "lofi",
+    pastel = "pastel",
+    fantasy = "fantasy",
+    wireframe = "wireframe",
+    black = "black",
+    luxury = "luxury",
+    dracula = "dracula"
+}
+export interface ITheme { id: ThemeId, name: string }
