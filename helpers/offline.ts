@@ -262,6 +262,7 @@ const updateOrder = (
         customer,
         customerNote,
         log,
+
         useDiscount
       );
       let cart = {};
@@ -310,6 +311,7 @@ const updateOrder = (
         }),
         order_local: JSON.stringify(newOfflineOrder),
         id: orderId,
+        sms:0,
         updateDate: getNewDate(),
         note: note,
         use_point: usePoint,
@@ -436,6 +438,7 @@ const pushOfflineOrders = (
     table_id: tableId,
     local_id: factorID,
     log: log ? log : [],
+    sms:0,
     discount_id: useDiscount ? useDiscount["id"] : 0,
   };
 };
