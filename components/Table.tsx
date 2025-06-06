@@ -1,43 +1,84 @@
-import { CheckOutlined, DollarCircleFilled, DollarOutlined, RetweetOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Tooltip } from 'antd';
-import { numberFormat } from 'helpers/format';
-import { useRouter } from 'next/router';
-import { getBranchId, getTime, sendAlert } from 'util/util';
-import { useCartContext } from './CartProvider';
-import { useProductContext } from './Products';
-import { DownIcon, PenIcon } from './shared/SvgIcon';
-import { findOrder, removeOrder, saveOrderOffline } from 'services/order';
-import { request, request2 } from 'services/table';
-import { request as req } from "util/util";
+import {CheckOutlined, DollarCircleFilled} from '@ant-design/icons';
+import {Button, Dropdown, Tooltip} from 'antd';
+import {numberFormat} from 'helpers/format';
+import {useRouter} from 'next/router';
+import {getBranchId, getTime, sendAlert} from 'util/util';
+import {useCartContext} from './CartProvider';
+import {useProductContext} from './Products';
+import {DownIcon, PenIcon} from './shared/SvgIcon';
+import {findOrder, removeOrder, saveOrderOffline} from 'services/order';
+import {request, request2} from 'services/table';
 import apiUrl from 'apiUrl';
-import { mergeTable, submitOrder } from 'helpers/helper';
+import {mergeTable} from 'helpers/helper';
 
-export default function Table({ data, tableFullSelected, setTableFullSelected, tableEmptySelected, setTableEmptySelected, tbl1,
-    setTbl1,
-    tbl2,
-    setTbl2, setShowDetails, setDetails, setStatus, updateTables }) {
-    const { activeKey, setSelectedTable, userAccess, userData, interval, socket, token } = useProductContext();
-    const { emptyCart, updateOrder, printOrder } = useCartContext();
+export default function Table({
+                                  data,
+                                  tableFullSelected,
+                                  setTableFullSelected,
+                                  tableEmptySelected,
+                                  setTableEmptySelected,
+                                  tbl1,
+                                  setTbl1,
+                                  tbl2,
+                                  setTbl2,
+                                  setShowDetails,
+                                  setDetails,
+                                  setStatus,
+                                  updateTables
+                              }) {
+    const {activeKey, setSelectedTable, userAccess, userData, interval, socket, token} = useProductContext();
+    const {emptyCart, updateOrder, printOrder} = useCartContext();
     const router = useRouter();
+
     const generateClass = (item) => {
         return `${tableEmptySelected &&
-            tableEmptySelected['offline_id'] == item['offline_id']
+        tableEmptySelected['offline_id'] == item['offline_id']
             ? "border-2 border-blue"
             : tableFullSelected && tableFullSelected['offline_id'] == item['offline_id']
                 ? "border-2 border-blue"
                 : ""
-            } ${[4, 5, 6, 20].includes(item['status'])
-                ? "bg-green"
-                : (item.delivery ? 'bg-indigo2' : (!item['offline_id']
-                    ? "bg-neutral"
-                    : (item['status'] == -1
-                        ? "bg-yellow"
-                        : ((item.flag == 1) ? 'bg-indigo' : "bg-red"))))
-            } ${[7].includes(item['status'])
-                ? "bg-green"
-                : ''
-            }`
+        } ${[4, 5, 6, 20].includes(item['status'])
+            ? "bg-green"
+            : (item.delivery ? 'bg-indigo2' : (!item['offline_id']
+                ? "bg-neutral"
+                : (item['status'] == -1
+                    ? "bg-yellow"
+                    : ((item.flag == 1) ? 'bg-indigo' : "bg-red"))))
+        } ${[7].includes(item['status'])
+            ? "bg-green"
+            : ''
+        }`
     }
+    const handleUpdateOrder = async (order) => {
+        const res = await request2(`${apiUrl[1]}/get-pay`, 'POST', {
+            offline_id: order.offline_id
+        });
+
+
+
+
+        if (res['pay_status']==1) {
+
+            findOrder({ offline_id: order.offline_id }).then((o) => {
+                if (o && o['order'].length > 0) {
+                    saveOrderOffline({
+                        id: order.offline_id,
+                        status: 7,
+                        details: { ...o['order'][0]['details'],status: 7 , pay_status:1  },
+                    });
+                    console.log("Order saved offline successfully.");
+
+                } else {
+                    console.log('No orders found.');
+                }
+            }).catch((err) => {
+                console.error('Error fetching order:', err);
+            });
+            router.push(router.asPath);
+        }
+
+
+    };
     const handleDoubleClick = (item) => {
         if (item['offline_id'] && activeKey != '-3') {
             if (tableFullSelected != "")
@@ -93,21 +134,42 @@ export default function Table({ data, tableFullSelected, setTableFullSelected, t
         try {
             let branch_id = getBranchId(token);
             order['branch_id'] = branch_id;
-            let res = await request2(`${apiUrl[1]}/pay-order`, 'POST', order);
-            console.log(res)
-        } catch (error) {
 
+            let res = await request2(`${apiUrl[1]}/pay-order`, 'POST', order);
+
+            findOrder({ offline_id: order.offline_id }).then((o) => {
+                if (o && o['order'].length > 0) {
+                    saveOrderOffline({
+                        id: order.offline_id,
+                        details: { ...o['order'][0]['details'], sms: 1 },
+                    });
+                    console.log("Order saved offline successfully.");
+                } else {
+                    console.log('No orders found.');
+                }
+            }).catch((err) => {
+                console.error('Error fetching order:', err);
+            });
+
+            router.push(router.asPath);
+        } catch (error) {
+            console.error("handlePay error:", error);
         }
     }
+
     const handleDropdownItems = (item) => {
+        console.log(item)
         let items = [];
         if (activeKey != '-3' && item['status'] != -1) {
             if (item['status'] != 5 && !item['no_update'] && !item['discount_code']) {
                 if ([4, 5, 6, 20].includes(item['status'])) {
                     if ((userAccess['down_edit_print']))
-                        items.push({ key: 1, label: <span onClick={() => updateOrder(item['offline_id'])}>ویرایش</span> });
+                        items.push({
+                            key: 1,
+                            label: <span onClick={() => updateOrder(item['offline_id'])}>ویرایش</span>
+                        });
                 } else
-                    items.push({ key: 1, label: <span onClick={() => updateOrder(item['offline_id'])}>ویرایش</span> });
+                    items.push({key: 1, label: <span onClick={() => updateOrder(item['offline_id'])}>ویرایش</span>});
             }
 
             if (item['status'] != 5 && userAccess['checkout'] && item['pay_status'] != 1 && !item['discount_code'])
@@ -118,23 +180,40 @@ export default function Table({ data, tableFullSelected, setTableFullSelected, t
                     }}>تسویه</span>
                 });
             if (item['status'] == 5)
-                items.push({ key: 3, label: <span onClick={() => setStatus(item['offline_id'], 6, item['flag'] == 1 ? 1 : 0)}>ترک میز</span> });
+                items.push({
+                    key: 3,
+                    label: <span
+                        onClick={() => setStatus(item['offline_id'], 6, item['flag'] == 1 ? 1 : 0)}>ترک میز</span>
+                });
             if (userData['client_type'] == 1)
-                items.push({ key: 4, label: <span onClick={() => printOrder(item['offline_id'], true, 1, null, data['p_bill'])}>چاپ مجدد</span> });
+                items.push({
+                    key: 4,
+                    label: <span
+                        onClick={() => printOrder(item['offline_id'], true, 1, null, data['p_bill'])}>چاپ مجدد</span>
+                });
 
             if (userData['status'] != -1) {
-                items.push({ key: 5, label: <span onClick={() => printOrder(item['offline_id'], false, 1, 'p1', data['p_bill'], true)}> صورت حساب از صندوق</span> });
-                items.push({ key: 6, label: <span onClick={() => printOrder(item['offline_id'], false, 1, 'p0', data['p_bill'])}> صورت حساب با تبلت</span> });
+                items.push({
+                    key: 5,
+                    label: <span onClick={() => printOrder(item['offline_id'], false, 1, 'p1', data['p_bill'], true)}> صورت حساب از صندوق</span>
+                });
+                items.push({
+                    key: 6,
+                    label: <span onClick={() => printOrder(item['offline_id'], false, 1, 'p0', data['p_bill'])}> صورت حساب با تبلت</span>
+                });
             }
             if (![5, 6, 20].includes(item['status']))
-                items.push({ key: 7, label: <span onClick={() => handleSms(item['offline_id'])}>سفارش آماده شد</span> });
+                items.push({key: 7, label: <span onClick={() => handleSms(item['offline_id'])}>سفارش آماده شد</span>});
             if (item['pay_status'] != 1)
-                items.push({ key: 11, label: <span onClick={() => handlePay(item)}>پرداخت آنلاین</span> });
+                items.push({key: 11, label: <span onClick={() => handlePay(item)}>پرداخت آنلاین</span>});
 
             if (item['status'] != 5 && userAccess['checkout'])
                 items.push({
-                    key: 8, label: <span className={item['status'] != 7 && item['pay_status'] != 1 && userData['leaving_table'] ? 'disabled' : ''} onClick={() => setStatus(item['offline_id'], 6, item['flag'] ? 1 : 0)
-                    }>
+                    key: 8,
+                    label: <span
+                        className={item['status'] != 7 && item['pay_status'] != 1 && userData['leaving_table'] ? 'disabled' : ''}
+                        onClick={() => setStatus(item['offline_id'], 6, item['flag'] ? 1 : 0)
+                        }>
                         {
                             [1, 2].includes(item['type'])
                                 ? item.type == 1
@@ -142,7 +221,7 @@ export default function Table({ data, tableFullSelected, setTableFullSelected, t
                                     : "به سمت مشتری ارسال شد"
                                 : " ترک میز"
                         }
-                    </span >,
+                    </span>,
                     className: 'bg-green'
                 });
 
@@ -196,21 +275,27 @@ export default function Table({ data, tableFullSelected, setTableFullSelected, t
 
         } else if (activeKey == '-3') {
             if (userData['status'] != -1) {
-                items.push({ key: 5, label: <span onClick={() => printOrder(item['offline_id'], false, 1, 'p1', data['p_bill'])}> صورت حساب از صندوق</span> });
-                items.push({ key: 6, label: <span onClick={() => printOrder(item['offline_id'], false, 1, 'p0', data['p_bill'])}> صورت حساب با تبلت</span> });
+                items.push({
+                    key: 5,
+                    label: <span onClick={() => printOrder(item['offline_id'], false, 1, 'p1', data['p_bill'])}> صورت حساب از صندوق</span>
+                });
+                items.push({
+                    key: 6,
+                    label: <span onClick={() => printOrder(item['offline_id'], false, 1, 'p0', data['p_bill'])}> صورت حساب با تبلت</span>
+                });
             }
         }
         return items;
     }
     const handleSms = (id) => {
-        findOrder({ offline_id: id }, 1).then((r) => {
+        findOrder({offline_id: id}, 1).then((r) => {
             if (r["order"]) {
                 let o = r['order'];
                 let d = o['details'];
                 let u = d['customer'];
 
                 if (u['username']) {
-                    request({ phone: u['username'], name: u['name'], id: o['_id'] }, apiUrl[1] + '/send-sms')
+                    request({phone: u['username'], name: u['name'], id: o['_id']}, apiUrl[1] + '/send-sms')
                     sendAlert(true, 'پیام ارسال شد')
                 }
             }
@@ -231,21 +316,21 @@ export default function Table({ data, tableFullSelected, setTableFullSelected, t
         if (window.confirm("آیا مطمئن هستید؟")) {
             removeOrder(id).then((res) => {
                 if (res) {
-                    findOrder({ removeOrder: 1, offline_id: id }).then((r) => {
+                    findOrder({removeOrder: 1, offline_id: id}).then((r) => {
                         if (r["order"].acknowledged === true) {
                             updateTables();
                         }
                     });
                     return;
                 } else {
-                    findOrder({ offline_id: id }, 1).then((r) => {
+                    findOrder({offline_id: id}, 1).then((r) => {
                         if (r["order"].remove_flag != 1) {
                             saveOrderOffline({
                                 id: id,
                                 remove_flag: 1,
                             });
                         } else {
-                            findOrder({ removeOrder: 1, offline_id: id }).then((r) => {
+                            findOrder({removeOrder: 1, offline_id: id}).then((r) => {
                                 if (r["order"].acknowledged === true) {
                                     updateTables();
                                 }
@@ -299,7 +384,7 @@ export default function Table({ data, tableFullSelected, setTableFullSelected, t
                                                                 items: handleDropdownItems(item)
                                                             }} trigger={['click']}>
                                                                 <Button type='primary' size='small'>
-                                                                    <DownIcon className="w-4 h-4" />
+                                                                    <DownIcon className="w-4 h-4"/>
                                                                 </Button>
                                                             </Dropdown>
                                                             {"#" + item['_id']}
@@ -309,12 +394,18 @@ export default function Table({ data, tableFullSelected, setTableFullSelected, t
                                                                         {
                                                                             [4, 5, 6, 20].includes(item['status']) ? <>
                                                                                 {
-                                                                                    (userAccess['down_edit_print']) ? <Button danger type='primary' size='small' onClick={() => updateOrder(item['offline_id'])}>
-                                                                                        <PenIcon width="16" height="16" />
-                                                                                    </Button> : ''
+                                                                                    (userAccess['down_edit_print']) ?
+                                                                                        <Button danger type='primary'
+                                                                                                size='small'
+                                                                                                onClick={() => updateOrder(item['offline_id'])}>
+                                                                                            <PenIcon width="16"
+                                                                                                     height="16"/>
+                                                                                        </Button> : ''
                                                                                 }
-                                                                            </> : <Button danger type='primary' size='small' onClick={() => updateOrder(item['offline_id'])}>
-                                                                                <PenIcon width="16" height="16" />
+                                                                            </> : <Button danger type='primary'
+                                                                                          size='small'
+                                                                                          onClick={() => updateOrder(item['offline_id'])}>
+                                                                                <PenIcon width="16" height="16"/>
                                                                             </Button>
                                                                         }
                                                                     </>
@@ -324,35 +415,51 @@ export default function Table({ data, tableFullSelected, setTableFullSelected, t
                                                                 <img
                                                                     src={["1", "2"].includes(item.type) || item.delivery ? "/images/delivery.png" : "/images/disconnected.png"}
                                                                     alt="connection status"
-                                                                    style={{ width: 30, height: 30 }}
+                                                                    style={{width: 30, height: 30}}
                                                                 />
                                                             </Tooltip>
+
+
+                                                            {item.sms === 1 && ![4, 5, 7, 6, 20].includes(item.status) && (
+                                                                <div>
+                                                                    <button
+                                                                        onClick={() => handleUpdateOrder(item)}
+                                                                        className="bg-blue-500 hover:bg-blue-600  text-sm px-3 py-1 rounded-md shadow transition-all"
+                                                                    >
+                                                                        بروزرسانی
+                                                                    </button>
+                                                                </div>
+                                                            )}
+
+
 
                                                             <Tooltip title="نمایش جزئیات">
                                                                 <img
                                                                     src="/images/eye.png"
                                                                     className='pointer'
-                                                                    style={{ width: 30, height: 30 }}
+                                                                    style={{width: 30, height: 30}}
                                                                     onClick={() =>
                                                                         showDetails(item)
                                                                     }
                                                                 />
                                                             </Tooltip>
                                                             {item.sendAll ? <>
-                                                                <Tooltip title="تحویل داده شده">
-                                                                    <CheckOutlined className="text-success bold text-lg" />
-                                                                </Tooltip>
-                                                            </>
+                                                                    <Tooltip title="تحویل داده شده">
+                                                                        <CheckOutlined
+                                                                            className="text-success bold text-lg"/>
+                                                                    </Tooltip>
+                                                                </>
                                                                 : ''}
                                                             {
                                                                 item['pay_status'] == 1 && (
                                                                     <Tooltip title={'پرداخت شده'}>
-                                                                        <DollarCircleFilled className=" bold text-lg" />
+
+                                                                        <DollarCircleFilled className=" bold text-lg"/>
                                                                     </Tooltip>
                                                                 )
                                                             }
                                                         </>
-                                                    : ''
+                                                        : ''
                                                 }
                                             </div>
                                         </div>

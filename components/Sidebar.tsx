@@ -92,6 +92,7 @@ function Sidebar() {
                 }
             }
             values['cart'] = cart;
+            values['sms'] = 0;
             values['priceDetails'] = sidebarPrice;
             values['total'] = sidebarPrice['total'];
             values['price'] = sidebarPrice['price'];
@@ -127,11 +128,13 @@ function Sidebar() {
             }
             values['discount_code'] = useDiscountCode;
             values['details'] = { ...values };
+            values['sms']=0
 
             console.log(values, ' ---------------------------');
             
             let res = await submitOrder(values);
             if (res) {
+                res['sms']=0;
                 res['details']['_id'] = res['_id'];
                 res['details']['status'] = res['status'];
                 if (updateData['_id'])
